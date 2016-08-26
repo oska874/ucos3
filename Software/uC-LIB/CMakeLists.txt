@@ -1,0 +1,6 @@
+
+AUX_SOURCE_DIRECTORY(. LIBUC_SRC)
+
+INCLUDE_DIRECTORIES(.)
+
+add_library(libuc ${LIBUC_SRC})
