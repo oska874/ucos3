@@ -6,4 +6,4 @@ INCLUDE_DIRECTORIES(../uC-CPU/Posix/GNU)
 INCLUDE_DIRECTORIES(../uC-CPU)
 INCLUDE_DIRECTORIES(../../Examples/POSIX/GNU/OS3)
 
-add_library(uc ${LIBUC_SRC})
+add_library(libuc ${LIBUC_SRC})

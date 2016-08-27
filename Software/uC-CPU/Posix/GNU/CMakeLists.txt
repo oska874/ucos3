@@ -7,4 +7,4 @@ INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uC-CPU/Po
 INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Examples/POSIX/GNU/OS3)
 
 
-add_library(hw2 ${LIBHWP_SRC})
+add_library(libhw2 ${LIBHWP_SRC})

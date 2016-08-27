@@ -5,4 +5,4 @@ INCLUDE_DIRECTORIES(.)
 INCLUDE_DIRECTORIES(./Posix/GNU)
 INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Examples/POSIX/GNU/OS3)
 
-add_library(hw1 ${LIBHW_SRC})
+add_library(libhw1 ${LIBHW_SRC})

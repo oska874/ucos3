@@ -8,4 +8,4 @@ INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Examples/POSIX/GNU
 INCLUDE_DIRECTORIES(../../uC-CPU)
 INCLUDE_DIRECTORIES(../../uC-CPU/Posix/GNU)
 
-add_library(os1  ${LIBOS3_SRC})
+add_library(libos1  ${LIBOS3_SRC})
