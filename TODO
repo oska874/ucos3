@@ -1,5 +1,13 @@
 
 
+2016.8.28
+1. 使用 root 可以运行 ucos , 操作过程—— 编译>切换root>解除限制>运行ucos ：
+
+  sh build.sh
+  su root
+  ulimit -r unlimited
+  build/ucos 
+
 2016.8.27
 1. cmake 编译完成，并生成可执行文件，接下来要解决 ucos 运行错误。
 
