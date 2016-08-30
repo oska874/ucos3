@@ -7,15 +7,17 @@ SET(CMAKE_C_FLAGS_RELEASE "$ENV{CFLAGS} -O3 -Wall ")         #set release mode c
 SET(CMAKE_BUILD_TYPE "Debug")     #set Debug or Release
 
 
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uC-CPU)
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uC-CPU/Posix/GNU)
+set(UCOS3_SOURCE_DIR ${PROJECT_SOURCE_DIR})
 
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uCOS-III/Source)
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uCOS-III/Ports/POSIX/GNU)
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Software/uC-CPU)
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Software/uC-CPU/Posix/GNU)
 
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Software/uC-LIB)
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Software/uCOS-III/Source)
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Software/uCOS-III/Ports/POSIX/GNU)
 
-INCLUDE_DIRECTORIES(/workspace/repos/github/rtos/ucos/Micrium/Examples/POSIX/GNU/OS3)
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Software/uC-LIB)
+
+INCLUDE_DIRECTORIES(${UCOS3_SOURCE_DIR}/Examples/POSIX/GNU/OS3)
 
 ADD_SUBDIRECTORY(Software/uC-CPU/Posix/GNU)
 ADD_SUBDIRECTORY(Software/uC-CPU/)
