@@ -1,5 +1,7 @@
 
 .vscode
+tags
+build/
 
 # Object files
 *.o
