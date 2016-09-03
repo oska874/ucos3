@@ -392,22 +392,27 @@ void  OSTaskSwHook (void)
 
 
 #if OS_CFG_APP_HOOKS_EN > 0u
+    /*判断是否定义了hook，然后调用（其它hook类似）*/
     if (OS_AppTaskSwHookPtr != (OS_APP_HOOK_VOID)0) {
         (*OS_AppTaskSwHookPtr)();
     }
 #endif
 
 #if OS_CFG_TASK_PROFILE_EN > 0u
+    /*记录任务运行的时间*/
     ts = OS_TS_GET();
     if (OSTCBCurPtr != OSTCBHighRdyPtr) {
+        /*切换任务之前更新当前任务的总运行时间和本次运行使用的时间*/
         OSTCBCurPtr->CyclesDelta  = ts - OSTCBCurPtr->CyclesStart;
         OSTCBCurPtr->CyclesTotal += (OS_CYCLES)OSTCBCurPtr->CyclesDelta;
     }
 
+    /*更新时间记录点*/
     OSTCBHighRdyPtr->CyclesStart = ts;
 #endif
 
 #ifdef  CPU_CFG_INT_DIS_MEAS_EN
+    /*任务运行过程中每次关开中断的最长时间*/
     int_dis_time = CPU_IntDisMeasMaxCurReset();             /* Keep track of per-task interrupt disable time          */
     if (OSTCBCurPtr->IntDisTimeMax < int_dis_time) {
         OSTCBCurPtr->IntDisTimeMax = int_dis_time;
@@ -415,6 +420,7 @@ void  OSTaskSwHook (void)
 #endif
 
 #if OS_CFG_SCHED_LOCK_TIME_MEAS_EN > 0u
+    /*以及 lock schedule 的时间*/
                                                             /* Keep track of per-task scheduler lock time             */
     if (OSTCBCurPtr->SchedLockTimeMax < (CPU_TS)OSSchedLockTimeMaxCur) {
         OSTCBCurPtr->SchedLockTimeMax = (CPU_TS)OSSchedLockTimeMaxCur;
@@ -472,8 +478,10 @@ void  OSStartHighRdy (void)
 
     p_tcb_ext = (OS_TCB_EXT_POSIX *)OSTCBCurPtr->ExtPtr;
 
+    /*切换到新任务前要关闭中断，防止操作被打断*/
     CPU_INT_DIS();
 
+    /*模拟：通过sem唤醒之前使用pthread创建的任务*/
     ERR_CHK(sem_post(&p_tcb_ext->Sem));
 
     ERR_CHK(sigemptyset(&sig_set));
@@ -529,6 +537,8 @@ void  OSCtxSw (void)
 
     OSTaskSwHook();
 
+    /*当前任务和要切换到的高优先级任务*/
+    /*获取高优先级任务的时机：1. 创建了新任务且优先级比当前的高；2. 当前任务的时间片用尽； 3. 当前任务执行了放弃CPU的操作（如等待资源、唤醒其他任务等）*/
     p_tcb_ext_new = (OS_TCB_EXT_POSIX *)OSTCBHighRdyPtr->ExtPtr;
     p_tcb_ext_old = (OS_TCB_EXT_POSIX *)OSTCBCurPtr->ExtPtr;
 
@@ -539,8 +549,10 @@ void  OSCtxSw (void)
     OSTCBCurPtr = OSTCBHighRdyPtr;
     OSPrioCur   = OSPrioHighRdy;
 
+    /*模拟：切换到新任务*/
     ERR_CHK(sem_post(&p_tcb_ext_new->Sem));
 
+    /*模拟：挂起当前任务*/
     if (detach == DEF_NO) {
         do {
             ret = sem_wait(&p_tcb_ext_old->Sem);
@@ -575,6 +587,7 @@ void  OSCtxSw (void)
 
 void  OSIntCtxSw (void)
 {
+    /*中断中切换任务，因为arm的有多种运行模式，所以实现比较复杂，涉及模式切换和操作不同组的寄存器*/
     if (OSTCBCurPtr != OSTCBHighRdyPtr) {
         OSCtxSw();
     }
@@ -592,9 +605,10 @@ void  OSIntCtxSw (void)
 *********************************************************************************************************
 */
 
+/*必须在任务调度开始之后再执行，否则会造成系统崩溃，因为这时调度任务机制相关的变量还没有设置化*/
 void  OS_CPU_SysTickInit (void)
 {
-    CPU_TmrInterruptCreate(&OSTickTmrInterrupt);
+    CPU_TmrInterruptCreate(&OSTickTmrInterrupt);/*注册时钟中断*/
 }
 
 
@@ -606,6 +620,8 @@ void  OS_CPU_SysTickInit (void)
 *********************************************************************************************************
 */
 
+/*时钟中断*/
+/*1. 用来更新tick ； 2. 更新和tick 相关的变量（如任务的时间片、timer）*/
 static  void  OSTimeTickHandler (void)
 {
     OSIntEnter();
@@ -627,6 +643,7 @@ static  void  OSTimeTickHandler (void)
 *********************************************************************************************************
 */
 
+/*模拟：将ucos任务(utask)改装成pthread任务(ptask)*/
 static void  *OSTaskPosix (void  *p_arg)
 {
     OS_TCB_EXT_POSIX  *p_tcb_ext;
@@ -637,6 +654,7 @@ static void  *OSTaskPosix (void  *p_arg)
     p_tcb     = (OS_TCB           *)p_arg;
     p_tcb_ext = (OS_TCB_EXT_POSIX *)p_tcb->ExtPtr;
 
+    /*utask pid = ptask tid*/
     p_tcb_ext->ProcessId = syscall(SYS_gettid);
     ERR_CHK(sem_post(&p_tcb_ext->InitSem));
 
@@ -646,6 +664,8 @@ static void  *OSTaskPosix (void  *p_arg)
     }
 #endif
 
+    /*创建任务过程中需要关中断，保证操作不会失败*/
+    /*模拟：*/
     CPU_INT_DIS();
     {
         int ret = -1u;
@@ -712,6 +732,7 @@ static  void  OSTaskTerminate (OS_TCB  *p_tcb)
 *********************************************************************************************************
 */
 
+/*模拟：创建任务*/
 static  void  OSThreadCreate (pthread_t  *p_thread,
                             void         *p_task,
                             void         *p_arg,
@@ -729,6 +750,8 @@ static  void  OSThreadCreate (pthread_t  *p_thread,
         raise(SIGABRT);
     }
 
+    /*模拟： 使用pthread接口初始化utask结构体*/
+    /*注意：linux 模拟 ucos 的实时任务，需要使用 rr 实时调度*/
     ERR_CHK(pthread_attr_init(&attr));
     ERR_CHK(pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED));
     param.__sched_priority = prio;
