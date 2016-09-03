@@ -571,6 +571,7 @@ void  OSTimeSet (OS_TICK   ticks,
 ************************************************************************************************************************
 */
 
+/*时钟中断：1. 更新tick 2. 处理任务调度以 3. 及 rr 调度和任务时间片*/
 void  OSTimeTick (void)
 {
 #if ((OS_CFG_TASK_TICK_EN == DEF_ENABLED) || (OS_CFG_TMR_EN == DEF_ENABLED))

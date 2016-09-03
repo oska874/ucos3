@@ -1129,10 +1129,11 @@ struct os_tcb {
 #endif
 
 #if defined(OS_CFG_TLS_TBL_SIZE) && (OS_CFG_TLS_TBL_SIZE > 0u)
-    OS_TLS               TLS_Tbl[OS_CFG_TLS_TBL_SIZE];
+    OS_TLS               TLS_Tbl[OS_CFG_TLS_TBL_SIZE];  /*thread local storage 保存和任务相关的数据，比ucos2 多出的部分*/
 #endif
 
 #if (OS_CFG_DBG_EN == DEF_ENABLED)
+    /*任务函数入口*/
     OS_TASK_PTR          TaskEntryAddr;                     /* Pointer to task entry point address                    */
     void                *TaskEntryArg;                      /* Argument passed to task when it was created            */
 #endif
@@ -1144,6 +1145,7 @@ struct os_tcb {
     OS_STATE             TaskState;                         /* See OS_TASK_STATE_xxx                                  */
     OS_PRIO              Prio;                              /* Task priority (0 == highest)                           */
 #if (OS_CFG_MUTEX_EN == DEF_ENABLED)
+    /*用于处理优先级翻转*/
     OS_PRIO              BasePrio;                          /* Base priority (Not inherited)                          */
     OS_MUTEX            *MutexGrpHeadPtr;                   /* Owned mutex group head pointer                         */
 #endif
@@ -1171,6 +1173,7 @@ struct os_tcb {
 #endif
 
 #if (OS_CFG_SCHED_ROUND_ROBIN_EN == DEF_ENABLED)
+    /*时间片，比ucos2 多的一种调度方案*/
     OS_TICK              TimeQuanta;
     OS_TICK              TimeQuantaCtr;
 #endif
@@ -1203,6 +1206,7 @@ struct os_tcb {
 #endif
 
 #if (OS_CFG_TASK_PROFILE_EN == DEF_ENABLED)
+    /*记录任务运行数据，用于系统优化*/
     OS_CPU_USAGE         CPUUsage;                          /* CPU Usage of task (0.00-100.00%)                       */
     OS_CPU_USAGE         CPUUsageMax;                       /* CPU Usage of task (0.00-100.00%) - Peak                */
     OS_CTX_SW_CTR        CtxSwCtr;                          /* Number of time the task was switched in                */

@@ -82,6 +82,7 @@ void  OS_TickTask (void  *p_arg)
     (void)&p_arg;                                               /* Prevent compiler warning                             */
 
     while (DEF_ON) {
+        /*在时钟中断中要处理 task sem*/
         (void)OSTaskSemPend(0u,
                             OS_OPT_PEND_BLOCKING,
                             DEF_NULL,

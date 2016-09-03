@@ -40,6 +40,7 @@ const  CPU_CHAR  *os_prio__c = "$Id: $";
 #endif
 
 
+/*任务列表，每一位代表一个就绪任务，任务是按照优先级排列的，数组长度和任务总数有关（size=no/cpu_data_size，上取整）*/
 CPU_DATA   OSPrioTbl[OS_PRIO_TBL_SIZE];                         /* Declare the array local to this file to allow for  ...*/
                                                                 /* ... optimization.  In other words, this allows the ...*/
                                                                 /* ... table to be located in fast memory                */
@@ -88,6 +89,7 @@ void  OS_PrioInit (void)
 ************************************************************************************************************************
 */
 
+/*返回任务优先级，对应的是一个任务链表*/
 OS_PRIO  OS_PrioGetHighest (void)
 {
     CPU_DATA  *p_tbl;
@@ -97,11 +99,14 @@ OS_PRIO  OS_PrioGetHighest (void)
     prio  = 0u;
     p_tbl = &OSPrioTbl[0];
 #if (OS_CFG_PRIO_MAX > DEF_INT_CPU_NBR_BITS)
+    /*依次检查数组的每个变量，检查是否存在任务*/
     while (*p_tbl == 0u) {                                      /* Search the bitmap table for the highest priority     */
         prio += DEF_INT_CPU_NBR_BITS;                           /* Compute the step of each CPU_DATA entry              */
         p_tbl++;
     }
 #endif
+    /*找到优先级最高的任务*/
+    /*找到一个不为0的bit，gcc 提供了对应的函数*/
     prio += (OS_PRIO)CPU_CntLeadZeros(*p_tbl);                  /* Find the position of the first bit set at the entry  */
 
     return (prio);

@@ -447,14 +447,15 @@ void  OSSched (void)
     if (OSIntNestingCtr > 0u) {                                 /* ISRs still nested?                                   */
         return;                                                 /* Yes ... only schedule when no nested ISRs            */
     }
-
     if (OSSchedLockNestingCtr > 0u) {                           /* Scheduler locked?                                    */
         return;                                                 /* Yes                                                  */
     }
 
     CPU_INT_DIS();
+    /*找出最高优先级任务所在的链表*/
     OSPrioHighRdy   = OS_PrioGetHighest();                      /* Find the highest priority ready                      */
 #if (OS_CFG_TASK_IDLE_EN == DEF_ENABLED)
+    /*从链表找出第一个任务*/
     OSTCBHighRdyPtr = OSRdyList[OSPrioHighRdy].HeadPtr;         /* Get highest priority task ready-to-run               */
     if (OSTCBHighRdyPtr == OSTCBCurPtr) {                       /* Current task still the highest priority?             */
         CPU_INT_EN();                                           /* Yes                                                  */
@@ -487,6 +488,7 @@ void  OSSched (void)
     OS_TASK_SW();                                               /* Perform a task level context switch                  */
     CPU_INT_EN();
 #else
+    /*OS_CFG_PRIO_MAX-1 一般都是 idle task 的优先级，如果没有定义 idle ，但是当前最高优先级任务的优先级恰巧为 OS_CFG_PRIO_MAX -1 ，则系统在此死循环等待可运行的任务出现*/
     if ((OSPrioHighRdy != (OS_CFG_PRIO_MAX - 1u))) {
         OS_TASK_SW();                                           /* Perform a task level context switch                  */
         CPU_INT_EN();
@@ -694,6 +696,7 @@ void  OSSchedRoundRobinCfg (CPU_BOOLEAN   en,
         OSSchedRoundRobinEn = DEF_TRUE;
     }
 
+    /*时间片:tick = OSSchedRoundRobinDfltTimeQuanta */
     if (dflt_time_quanta > 0u) {
         OSSchedRoundRobinDfltTimeQuanta = dflt_time_quanta;
     } else {
@@ -766,6 +769,7 @@ void  OSSchedRoundRobinYield (OS_ERR  *p_err)
         return;
     }
 
+    /*RR 调度：时间片到期后，需要把当前任务放到任务就绪列表对应链表的表尾，然后从表头挑选一个任务运行*/
     OS_RdyListMoveHeadToTail(p_rdy_list);                       /* Move current OS_TCB to the end of the list           */
     p_tcb = p_rdy_list->HeadPtr;                                /* Point to new OS_TCB at head of the list              */
     if (p_tcb->TimeQuanta == 0u) {                              /* See if we need to use the default time slice         */
@@ -2002,6 +2006,8 @@ void  OS_PendObjDel1 (OS_PEND_OBJ  *p_obj,
 ************************************************************************************************************************
 */
 
+/*sem、task sem、queue、mutex 的 pend 和 post 操作最后收发ipc结构体都要调用os_post、os_pend 函数*/
+/*实际上这几种ipc结构体都是继承自struct os_pend_obj ，在 OS_OBJ_TYPE 做区别*/
 void  OS_Post (OS_PEND_OBJ  *p_obj,
                OS_TCB       *p_tcb,
                void         *p_void,
@@ -2733,6 +2739,12 @@ void  OS_SchedLockTimeMeasStop (void)
 ************************************************************************************************************************
 */
 
+/*RR 时间片调度*/
+/*优先级+时间片，链表*/
+/* 1. 高优先级优先调度
+ * 2. 同等优先级按顺序运行
+ * 3. 每个任务运行单次运行 time_quanta 个时间片
+ */
 #if (OS_CFG_SCHED_ROUND_ROBIN_EN == DEF_ENABLED)
 void  OS_SchedRoundRobin (OS_RDY_LIST  *p_rdy_list)
 {

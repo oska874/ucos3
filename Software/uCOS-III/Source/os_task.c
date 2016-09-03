@@ -2432,6 +2432,7 @@ void  OS_TaskInitTCB (OS_TCB  *p_tcb)
 #endif
 
 #if defined(OS_CFG_TLS_TBL_SIZE) && (OS_CFG_TLS_TBL_SIZE > 0u)
+    /*初始化 thread local storage 变量，这个是比 ucos2 多出的功能*/
     for (id = 0u; id < OS_CFG_TLS_TBL_SIZE; id++) {
         p_tcb->TLS_Tbl[id]    = 0u;
     }
@@ -2712,6 +2713,7 @@ void  OS_TaskResume (OS_TCB  *p_tcb,
 ************************************************************************************************************************
 */
 
+/*在哪里调用了？*/
 void  OS_TaskReturn (void)
 {
     OS_ERR  err;
@@ -2827,6 +2829,7 @@ OS_SEM_CTR  OS_TaskSemPost (OS_TCB  *p_tcb,
         case OS_TASK_STATE_PEND_SUSPENDED:
         case OS_TASK_STATE_PEND_TIMEOUT_SUSPENDED:
              if (p_tcb->PendOn == OS_TASK_PEND_ON_TASK_SEM) {   /* Is task signaled waiting for a signal?               */
+                 /*调用 os_core.c 中定义的 OS_Post 完成post操作，而OS_TaskSemPost函数本身只需要处理好 post 的逻辑和各种判断条件即可, pend 操作类似*/
                  OS_Post(DEF_NULL,                              /* Task is pending on signal                            */
                          p_tcb,
                          DEF_NULL,

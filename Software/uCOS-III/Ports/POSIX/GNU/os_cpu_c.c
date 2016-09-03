@@ -241,6 +241,7 @@ void  OSStatTaskHook (void)
 *********************************************************************************************************
 */
 
+/*模拟：在 hook 操作中为ucos创建任务做一些必要操作，但在实际开发中不是必需的*/
 void  OSTaskCreateHook (OS_TCB  *p_tcb)
 {
     OS_TCB_EXT_POSIX  *p_tcb_ext;
@@ -732,7 +733,7 @@ static  void  OSTaskTerminate (OS_TCB  *p_tcb)
 *********************************************************************************************************
 */
 
-/*模拟：创建任务*/
+/*模拟：创建符合posix标准的线程，在实际开发中，这不是必需的*/
 static  void  OSThreadCreate (pthread_t  *p_thread,
                             void         *p_task,
                             void         *p_arg,
