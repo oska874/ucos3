@@ -220,6 +220,7 @@
 #define  OS_STATE_RDY                        (CPU_BOOLEAN)(1u)
 
 
+/*状态值得每一位都有确定的含义*/
                                                                 /* ------------------- TASK STATES ------------------ */
 #define  OS_TASK_STATE_BIT_DLY               (OS_STATE)(0x01u)  /*   /-------- SUSPENDED bit                          */
                                                                 /*   |                                                */

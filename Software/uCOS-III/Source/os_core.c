@@ -1705,8 +1705,9 @@ void  OS_PendListRemove (OS_TCB  *p_tcb)
 
 
         while (n_pend_list > 0u) {
-        p_obj       =  p_pend_data->PendObjPtr;                 /* Get pointer to pend list                             */
+            p_obj       =  p_pend_data->PendObjPtr;                 /* Get pointer to pend list                             */
             p_pend_list = &p_obj->PendList;
+            /*list 和 data 都是成对处理的*/
             OS_PendListRemove1(p_pend_list,
                                p_pend_data);
             p_pend_data++;
@@ -2651,6 +2652,7 @@ void  OS_RdyListRemove (OS_TCB  *p_tcb)
 */
 
 #if (OS_CFG_ISR_POST_DEFERRED_EN == DEF_ENABLED)
+/*中断中切换任务*/
 void  OS_Sched0 (void)
 {
     CPU_SR_ALLOC();

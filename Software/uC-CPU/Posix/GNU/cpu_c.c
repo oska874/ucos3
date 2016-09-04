@@ -721,6 +721,7 @@ CPU_TS_TMR  CPU_TS_TmrRd (void)
             CPU_TS_TMR  ts;
 
 
+            /*模拟： 获取系统时间*/
     (void)clock_gettime(CLOCK_MONOTONIC, &res);
 
     ts = (CPU_TS_TMR)(res.tv_sec * 1000000000u + res.tv_nsec);

@@ -595,6 +595,7 @@ static  CPU_TS  OS_TickListUpdateTimeout (OS_TICK ticks)
 #if 0
         p_tcb->TickRemain--;
 #else
+        /*更新任务的 sleep tick 计数，因为参数 ticks 不一定为 1，所以要额外处理一下*/
         if (p_tcb->TickRemain <= ticks) {
             ticks = ticks - p_tcb->TickRemain;
             p_tcb->TickRemain = 0u;
@@ -602,13 +603,18 @@ static  CPU_TS  OS_TickListUpdateTimeout (OS_TICK ticks)
             p_tcb->TickRemain -= ticks;
         }
 #endif
-        while (p_tcb->TickRemain == 0u) {
+        /*任务 sleep 到期了，而sleep的原因除了是主动调用task sleep 以外，还有可能是执行某些pend操作时等待 timeout结束*/
+        /*OSTickListTiemeout 的成员都是等待timeout的任务，他们按照到期时间排列，越靠前越接近到期，所以只要从表头开始按顺序处理所有任务即可*/
+        /*一旦找到一个 tickremain 不为0的任务，则后面的任务就肯定不会到期，节省处理时间*/
+        /*这就要求在添加timeout 任务时需要按照到期时间的顺序添加*/
+         while (p_tcb->TickRemain == 0u) {
 #if (OS_CFG_DBG_EN == DEF_ENABLED)
             nbr_updated++;
 #endif
 
 #if (OS_CFG_MUTEX_EN == DEF_ENABLED)
             p_tcb_owner = DEF_NULL;
+
             if (p_tcb->PendOn == OS_TASK_PEND_ON_MUTEX) {
                 p_tcb_owner = ((OS_MUTEX *)p_tcb->PendDataTblPtr->PendObjPtr)->OwnerTCBPtr;
             }
@@ -621,6 +627,7 @@ static  CPU_TS  OS_TickListUpdateTimeout (OS_TICK ticks)
 #if (OS_CFG_TS_EN == DEF_ENABLED)
             p_tcb->TS      = OS_TS_GET();
 #endif
+            /*先将任务从wait list移除，然后再根据任务当前状态决定下一步的操作：唤醒任务到就绪队列还是让任务继续等待*/
             OS_PendListRemove(p_tcb);                           /* Remove from wait list                                */
             if (p_tcb->TaskState == OS_TASK_STATE_PEND_TIMEOUT) {
                 OS_RdyListInsert(p_tcb);                        /* Insert the task in the ready list                    */
@@ -634,8 +641,10 @@ static  CPU_TS  OS_TickListUpdateTimeout (OS_TICK ticks)
 
 #if (OS_CFG_MUTEX_EN == DEF_ENABLED)
             if(p_tcb_owner != DEF_NULL) {
+                /*处理优先级继承*/
                 if ((p_tcb_owner->Prio != p_tcb_owner->BasePrio) &&
                     (p_tcb_owner->Prio == p_tcb->Prio)) {       /* Has the owner inherited a priority?                  */
+                    /*找出等待 p_tcb_owner 的资源的最高优先级，然后将 p_tcb_owner 的优先级设置为最高优先级，这样就可以防止因为p_tcb_owner 因为优先级低得不到调度，造成一直无法post资源给 p_tcb，产生优先级反转问题*/
                     prio_new = OS_MutexGrpPrioFindHighest(p_tcb_owner);
                     prio_new = prio_new > p_tcb_owner->BasePrio ? p_tcb_owner->BasePrio : prio_new;
                     if(prio_new != p_tcb_owner->Prio) {
@@ -649,6 +658,7 @@ static  CPU_TS  OS_TickListUpdateTimeout (OS_TICK ticks)
 #endif
 
             p_list->TCB_Ptr = p_tcb->TickNextPtr;
+            /*更新 p_tcb ，继续处理下一个 tickremain 为零的任务*/
             p_tcb           = p_list->TCB_Ptr;                  /* Get 'p_tcb' again for loop                           */
             if (p_tcb == DEF_NULL) {
 #if (OS_CFG_DBG_EN == DEF_ENABLED)
